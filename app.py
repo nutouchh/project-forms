@@ -1,4 +1,4 @@
-"""Маршруты приложения и проверка данных"""
+"""Маршруты приложения и проверка данных. Часть студент1."""
 
 from flask import Flask, abort, redirect, render_template, request, url_for
 
@@ -46,6 +46,7 @@ def create_application():
         "form.html", data=data, error=error, page_title="Новая заявка",
         categories=CATEGORIES, priorities=PRIORITIES
     ), 400 if error else 200
+
 
 @app.get("/applications/<int:application_id>")
 def detail(application_id):

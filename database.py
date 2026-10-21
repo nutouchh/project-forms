@@ -1,10 +1,11 @@
 """SQLite: создание таблицы и операции с заявками. Часть студент1."""
 
+import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-DATABASE = Path(__file__).with_name("applications.db")
+DATABASE = Path(os.environ.get("DATABASE_PATH", str(Path(__file__).with_name("applications.db"))))
 
 
 def connect():
@@ -14,6 +15,7 @@ def connect():
 
 
 def init_db():
+    DATABASE.parent.mkdir(parents=True, exist_ok=True)
     with closing(connect()) as connection, connection:
         connection.execute("""
             CREATE TABLE IF NOT EXISTS applications (
