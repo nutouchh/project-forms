@@ -1,0 +1,113 @@
+---
+- name: Доставить и развернуть приложение из лабораторной работы 2
+  hosts: web
+  become: true
+
+  vars:
+    app_user: projectforms
+    app_dir: /opt/project-forms
+    app_port: 8000
+    app_source: "{{ playbook_dir }}/.."
+
+  tasks:
+    - name: Установить Python и средства для виртуального окружения
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+          - python3-setuptools
+          - python3-packaging
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Создать системную группу приложения
+      ansible.builtin.group:
+        name: "{{ app_user }}"
+        system: true
+
+    - name: Создать системного пользователя приложения
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        group: "{{ app_user }}"
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Создать папку приложения
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    - name: Доставить код и страницы приложения
+      ansible.builtin.copy:
+        src: "{{ app_source }}/{{ item }}"
+        dest: "{{ app_dir }}/"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "u=rwX,g=rX,o=rX"
+        directory_mode: "0755"
+      loop:
+        - app.py
+        - database.py
+        - requirements.txt
+        - templates
+        - static
+      notify: Перезапустить приложение
+
+    - name: Создать venv и установить зависимости приложения
+      ansible.builtin.pip:
+        requirements: "{{ app_dir }}/requirements.txt"
+        virtualenv: "{{ app_dir }}/venv"
+        virtualenv_command: /usr/bin/python3 -m venv
+      notify: Перезапустить приложение
+
+    - name: Установить Gunicorn в окружение приложения
+      ansible.builtin.pip:
+        name: gunicorn==23.0.0
+        virtualenv: "{{ app_dir }}/venv"
+      notify: Перезапустить приложение
+
+    - name: Создать службу systemd
+      ansible.builtin.template:
+        src: project-forms.service.j2
+        dest: /etc/systemd/system/project-forms.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Перезапустить приложение
+
+    - name: Применить изменения до проверки приложения
+      ansible.builtin.meta: flush_handlers
+
+    - name: Запустить службу и включить автозапуск
+      ansible.builtin.systemd_service:
+        name: project-forms
+        daemon_reload: true
+        enabled: true
+        state: started
+
+    - name: Дождаться ответа HTTP 200 на сервере
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/"
+        status_code: 200
+      register: app_response
+      until: app_response.status | default(0) == 200
+      retries: 15
+      delay: 2
+      changed_when: false
+
+    - name: Показать адрес приложения
+      ansible.builtin.debug:
+        msg: "Откройте http://{{ ansible_host | default(inventory_hostname) }}:{{ app_port }}"
+
+  handlers:
+    - name: Перезапустить приложение
+      ansible.builtin.systemd_service:
+        name: project-forms
+        daemon_reload: true
+        state: restarted
