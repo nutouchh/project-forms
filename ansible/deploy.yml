@@ -1,113 +1,84 @@
 ---
-- name: Доставить и развернуть приложение из лабораторной работы 2
-  hosts: web
+- name: Deliver Docker image and deploy Flask app on remote server
+  hosts: all
   become: true
-
+  gather_facts: false
   vars:
-    app_user: projectforms
-    app_dir: /opt/project-forms
-    app_port: 8000
-    app_source: "{{ playbook_dir }}/.."
+    image_archive: '{{ playbook_dir }}/../project-forms-image.tar'
+    image_name: project-forms
+    image_tag: latest
+    container_name: project-forms-app
+    server_port: 8000
+    container_port: 5000
+    archive_on_server: /tmp/project-forms-image.tar
+    volume_name: project-forms-data
 
   tasks:
-    - name: Установить Python и средства для виртуального окружения
-      ansible.builtin.apt:
-        name:
-          - python3
-          - python3-venv
-          - python3-pip
-          - python3-setuptools
-          - python3-packaging
-        state: present
-        update_cache: true
-        cache_valid_time: 3600
+    - name: Confirm Docker is installed and running
+      ansible.builtin.command: docker info
+      changed_when: false
 
-    - name: Создать системную группу приложения
-      ansible.builtin.group:
-        name: "{{ app_user }}"
-        system: true
-
-    - name: Создать системного пользователя приложения
-      ansible.builtin.user:
-        name: "{{ app_user }}"
-        group: "{{ app_user }}"
-        system: true
-        create_home: false
-        shell: /usr/sbin/nologin
-
-    - name: Создать папку приложения
-      ansible.builtin.file:
-        path: "{{ app_dir }}"
-        state: directory
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
-        mode: "0755"
-
-    - name: Доставить код и страницы приложения
+    - name: Transfer image tarball from Jenkins machine to server
       ansible.builtin.copy:
-        src: "{{ app_source }}/{{ item }}"
-        dest: "{{ app_dir }}/"
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
-        mode: "u=rwX,g=rX,o=rX"
-        directory_mode: "0755"
-      loop:
-        - app.py
-        - database.py
-        - requirements.txt
-        - templates
-        - static
-      notify: Перезапустить приложение
+        src: '{{ image_archive }}'
+        dest: '{{ archive_on_server }}'
+        mode: '0644'
 
-    - name: Создать venv и установить зависимости приложения
-      ansible.builtin.pip:
-        requirements: "{{ app_dir }}/requirements.txt"
-        virtualenv: "{{ app_dir }}/venv"
-        virtualenv_command: /usr/bin/python3 -m venv
-      notify: Перезапустить приложение
+    - name: Load Docker image on server
+      ansible.builtin.command:
+        argv: [docker, load, --input, '{{ archive_on_server }}']
+      changed_when: true
 
-    - name: Установить Gunicorn в окружение приложения
-      ansible.builtin.pip:
-        name: gunicorn==23.0.0
-        virtualenv: "{{ app_dir }}/venv"
-      notify: Перезапустить приложение
+    - name: Create persistent volume for SQLite
+      ansible.builtin.command:
+        argv: [docker, volume, create, '{{ volume_name }}']
+      changed_when: false
 
-    - name: Создать службу systemd
-      ansible.builtin.template:
-        src: project-forms.service.j2
-        dest: /etc/systemd/system/project-forms.service
-        owner: root
-        group: root
-        mode: "0644"
-      notify: Перезапустить приложение
+    - name: Check existing container
+      ansible.builtin.command:
+        argv: [docker, container, inspect, '{{ container_name }}']
+      register: previous_container
+      failed_when: false
+      changed_when: false
 
-    - name: Применить изменения до проверки приложения
-      ansible.builtin.meta: flush_handlers
+    - name: Remove previous container
+      ansible.builtin.command:
+        argv: [docker, rm, --force, '{{ container_name }}']
+      when: previous_container.rc == 0
+      changed_when: true
 
-    - name: Запустить службу и включить автозапуск
-      ansible.builtin.systemd_service:
-        name: project-forms
-        daemon_reload: true
-        enabled: true
-        state: started
+    - name: Start new application container
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - --detach
+          - --name
+          - '{{ container_name }}'
+          - --restart
+          - unless-stopped
+          - --publish
+          - '{{ server_port }}:{{ container_port }}'
+          - --volume
+          - '{{ volume_name }}:/app/data'
+          - '{{ image_name }}:{{ image_tag }}'
+      changed_when: true
 
-    - name: Дождаться ответа HTTP 200 на сервере
+    - name: Verify Flask responds with HTTP 200 on Ubuntu server
       ansible.builtin.uri:
-        url: "http://127.0.0.1:{{ app_port }}/"
+        url: 'http://127.0.0.1:{{ server_port }}/'
         status_code: 200
-      register: app_response
-      until: app_response.status | default(0) == 200
+      register: response
+      until: response.status | default(0) == 200
       retries: 15
       delay: 2
       changed_when: false
 
-    - name: Показать адрес приложения
-      ansible.builtin.debug:
-        msg: "Откройте http://{{ ansible_host | default(inventory_hostname) }}:{{ app_port }}"
+    - name: Delete transferred tarball after successful deploy
+      ansible.builtin.file:
+        path: '{{ archive_on_server }}'
+        state: absent
 
-  handlers:
-    - name: Перезапустить приложение
-      ansible.builtin.systemd_service:
-        name: project-forms
-        daemon_reload: true
-        state: restarted
+    - name: Report application URL
+      ansible.builtin.debug:
+        msg: 'Deployment OK: http://{{ inventory_hostname }}:{{ server_port }}/'
