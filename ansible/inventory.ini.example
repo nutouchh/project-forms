@@ -1,0 +1,2 @@
+[web]
+labserver ansible_host=192.168.1.100 ansible_user=student ansible_ssh_private_key_file=~/.ssh/id_ed25519_lab3 ansible_python_interpreter=/usr/bin/python3

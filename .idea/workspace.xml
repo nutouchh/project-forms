@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e9fdd829-6228-49c1-aea6-2599d60a622b" name="Changes" comment="Доработано приложение под CRUD" />
+    <list default="true" id="e9fdd829-6228-49c1-aea6-2599d60a622b" name="Changes" comment="Добавлен пример inventory и шаблон службы Gunicorn">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -46,7 +49,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "ansible",
     "nodejs_package_manager_path": "npm"
   }
 }]]></component>
@@ -97,7 +100,31 @@
       <option name="project" value="LOCAL" />
       <updated>1792565221441</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Дописан README">
+      <option name="closed" value="true" />
+      <created>1792565749117</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1792565749117</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Добавлен плейбук доставки и развертывания приложения">
+      <option name="closed" value="true" />
+      <created>1792567823232</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1792567823232</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Добавлен пример inventory и шаблон службы Gunicorn">
+      <option name="closed" value="true" />
+      <created>1792567965196</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1792567965196</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -131,17 +158,9 @@
     <MESSAGE value="Добавлены функции работы с БД (операции с заявками)" />
     <MESSAGE value="Добавлено приложение и get всех записей" />
     <MESSAGE value="Доработано приложение под CRUD" />
-    <option name="LAST_COMMIT_MESSAGE" value="Доработано приложение под CRUD" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/main.py</url>
-          <line>8</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="Дописан README" />
+    <MESSAGE value="Добавлен плейбук доставки и развертывания приложения" />
+    <MESSAGE value="Добавлен пример inventory и шаблон службы Gunicorn" />
+    <option name="LAST_COMMIT_MESSAGE" value="Добавлен пример inventory и шаблон службы Gunicorn" />
   </component>
 </project>

@@ -1,2 +1,4 @@
 applications.db
 /.venv
+ansible/inventory.ini
+*.retry
