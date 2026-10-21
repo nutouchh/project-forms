@@ -47,5 +47,32 @@ def create_application():
         categories=CATEGORIES, priorities=PRIORITIES
     ), 400 if error else 200
 
+@app.get("/applications/<int:application_id>")
+def detail(application_id):
+    return render_template("detail.html", application=find_application(application_id))
+
+
+@app.route("/applications/<int:application_id>/edit", methods=["GET", "POST"])
+def edit_application(application_id):
+    data = dict(find_application(application_id))
+    error = None
+    if request.method == "POST":
+        data, error = read_form()
+        if error is None:
+            database.update(application_id, data)
+            return redirect(url_for("detail", application_id=application_id))
+    return render_template(
+        "form.html", data=data, error=error, page_title="Редактирование заявки",
+        categories=CATEGORIES, priorities=PRIORITIES
+    ), 400 if error else 200
+
+
+@app.post("/applications/<int:application_id>/delete")
+def delete_application(application_id):
+    find_application(application_id)
+    database.delete(application_id)
+    return redirect(url_for("index"))
+
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
