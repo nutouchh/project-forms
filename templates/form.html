@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<h1>{{ page_title }}</h1>
+{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+<form method="post" class="card">
+    <label>ФИО
+        <input name="full_name" value="{{ data.get('full_name', '') }}" required>
+    </label>
+    <label>Учебная группа
+        <input name="group_name" value="{{ data.get('group_name', '') }}" required>
+    </label>
+    <label>Название проекта
+        <input name="project_title" value="{{ data.get('project_title', '') }}" required>
+    </label>
+    <label>Описание
+        <textarea name="description" rows="5" required>{{ data.get('description', '') }}</textarea>
+    </label>
+    <label>Категория
+        <select name="category" required>
+            <option value="">Выберите категорию</option>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if data.get('category') == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Приоритет
+        <select name="priority" required>
+            <option value="">Выберите приоритет</option>
+            {% for priority in priorities %}
+            <option value="{{ priority }}" {% if data.get('priority') == priority %}selected{% endif %}>{{ priority }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <div class="actions">
+        <button type="submit">Сохранить</button>
+        <a href="{{ url_for('index') }}">Отмена</a>
+    </div>
+</form>
+{% endblock %}
